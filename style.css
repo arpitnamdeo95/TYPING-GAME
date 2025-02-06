@@ -1,0 +1,292 @@
+
+      /* ============ Global Reset & Variables ============ */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        cursor: none; /* Hide default cursor for our custom animated cursor */
+      }
+      :root {
+        --primary-color: #d32f2f;       /* A deep red */
+        --accent-color: #fbc02d;        /* Golden yellow */
+        --bg-dark: #0d0d0d;             /* Nearly black */
+        --bg-light: #ffffff;
+        --text-light: #f5f5f5;
+        --text-dark: #212121;
+        --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+      body {
+        font-family: var(--font-family);
+        /* Updated background image path */
+        background: url("bg.jpg") no-repeat center center fixed;
+        background-size: cover;
+        color: var(--text-light);
+        overflow-x: hidden;
+        position: relative;
+      }
+      /* ============ Custom Animated Cursor ============ */
+      #customCursor {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 20px;
+        height: 20px;
+        background: var(--accent-color);
+        border-radius: 50%;
+        pointer-events: none;
+        transform: translate(-50%, -50%);
+        transition: transform 0.1s ease-out;
+        box-shadow: 0 0 10px var(--accent-color);
+        z-index: 10000;
+      }
+      /* ============ Animated Background Overlay (3D Glow) ============ */
+      .animated-bg {
+        position: fixed;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 70%);
+        animation: rotateBg 40s linear infinite;
+        z-index: -2;
+      }
+      @keyframes rotateBg {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      /* ============ Welcome Screen ============ */
+      #welcomeScreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.85);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 10;
+        animation: fadeIn 1.5s ease-out;
+      }
+      #welcomeScreen h1 {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        text-shadow: 2px 2px 5px #000;
+        animation: pulse 2s infinite;
+      }
+      #welcomeScreen p {
+        font-size: 1.2rem;
+        margin-bottom: 30px;
+        text-shadow: 1px 1px 3px #000;
+      }
+      #wordCountSelector {
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      #wordCountSelector label {
+        margin-right: 15px;
+        font-size: 1rem;
+      }
+      #wordCountSelector input {
+        margin-right: 5px;
+        transform: scale(1.2);
+        vertical-align: middle;
+      }
+      #startButton {
+        padding: 15px 30px;
+        font-size: 1.2rem;
+        border: none;
+        border-radius: 8px;
+        background: var(--primary-color);
+        color: #fff;
+        cursor: pointer;
+        transition: background 0.3s;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+      }
+      #startButton:hover {
+        background: #c62828;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes pulse {
+        0% { transform: scale(0.95); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(0.95); }
+      }
+      /* ============ Game Layout ============ */
+      #gameScreen {
+        display: none;
+        flex-direction: column;
+        padding: 20px;
+        min-height: 100vh;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      header h2 {
+        font-size: 1.8rem;
+        text-shadow: 1px 1px 3px #000;
+      }
+      #themeToggle {
+        padding: 8px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        background: var(--primary-color);
+        color: #fff;
+      }
+      
+      #testContainer {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        flex: 1;
+      }
+      #typingArea {
+        flex: 2;
+        background: rgba(0, 0, 0, 0.7);
+        border-radius: 10px;
+        padding: 30px;
+        position: relative;
+        overflow: hidden;
+        animation: slideIn 1s ease-out;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.7);
+      }
+      @keyframes slideIn {
+        from { transform: translateX(-50px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      #wordsDisplay {
+        font-size: 1.6rem;
+        line-height: 1.6;
+        letter-spacing: 1px;
+        margin-bottom: 20px;
+        user-select: none;
+      }
+      #wordsDisplay span {
+        transition: color 0.2s ease;
+      }
+      #wordsDisplay span.correct {
+        color: var(--primary-color);
+        text-shadow: 1px 1px 3px #000;
+      }
+      #wordsDisplay span.incorrect {
+        color: var(--accent-color);
+        text-shadow: 1px 1px 3px #000;
+      }
+      #textInput {
+        width: 100%;
+        padding: 12px;
+        font-size: 1.4rem;
+        border: none;
+        border-radius: 5px;
+        outline: none;
+      }
+      /* ============ Stats & Timer ============ */
+      #stats {
+        margin-top: 20px;
+        font-size: 1.2rem;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+      /* ============ Progress Graph Section ============ */
+      #progressSection {
+        flex: 1;
+        background: rgba(0, 0, 0, 0.7);
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.7);
+        text-align: center;
+        min-width: 280px;
+      }
+      #progressSection h3 {
+        margin-bottom: 10px;
+      }
+      /* Canvas for Chart.js graph */
+      #progressChart {
+        max-width: 100%;
+        height: 200px;
+      }
+      /* ============ Car Animation ============ */
+      #carAnimation {
+        position: fixed;
+        bottom: 20px;
+        left: -200px;
+        width: 150px;
+        height: auto;
+        background: url('car.png') no-repeat;
+        background-size: contain;
+        pointer-events: none;
+        display: none;
+        z-index: 5;
+      }
+      @keyframes carDrive {
+        0% { left: -200px; }
+        100% { left: 110%; }
+      }
+      /* ============ Confetti ============ */
+      .confetti {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: red;
+        animation: fall 2s linear forwards;
+        opacity: 0.8;
+      }
+      @keyframes fall {
+        0% { transform: translateY(0) rotate(0deg); }
+        100% { transform: translateY(300px) rotate(360deg); opacity: 0; }
+      }
+      /* ============ Results Modal ============ */
+      #resultsModal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.85);
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 20;
+        animation: fadeIn 0.5s ease-out;
+      }
+      #resultsModal .modal-content {
+        background: rgba(255, 255, 255, 0.95);
+        color: #000;
+        padding: 30px;
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.7);
+      }
+      #resultsModal .modal-content h2 {
+        margin-bottom: 15px;
+      }
+      #resultsModal .modal-content p {
+        margin-bottom: 10px;
+        font-size: 1.2rem;
+      }
+      #resultsModal .modal-content button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        background: var(--primary-color);
+        color: #fff;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+      #resultsModal .modal-content button:hover {
+        background: #c62828;
+      }
+      /* ============ Responsive ============ */
+      @media (max-width: 768px) {
+        #testContainer { flex-direction: column; }
+      }
