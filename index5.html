@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Yonko Typist - Wano Arc Edition</title>
+    <!-- Chart.js CDN for progress graph -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      /* ============ Global Reset & Variables ============ */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        cursor: none; /* Hide default cursor for our custom animated cursor */
+      }
+      :root {
+        --primary-color: #d32f2f;       /* A deep red */
+        --accent-color: #fbc02d;        /* Golden yellow */
+        --bg-dark: #0d0d0d;             /* Nearly black */
+        --bg-light: #ffffff;
+        --text-light: #f5f5f5;
+        --text-dark: #212121;
+        --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+      body {
+        font-family: var(--font-family);
+        /* Updated background image path */
+        background: url("bg.jpg") no-repeat center center fixed;
+        background-size: cover;
+        color: var(--text-light);
+        overflow-x: hidden;
+        position: relative;
+      }
+      /* ============ Custom Animated Cursor ============ */
+      #customCursor {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 20px;
+        height: 20px;
+        background: var(--accent-color);
+        border-radius: 50%;
+        pointer-events: none;
+        transform: translate(-50%, -50%);
+        transition: transform 0.1s ease-out;
+        box-shadow: 0 0 10px var(--accent-color);
+        z-index: 10000;
+      }
+      /* ============ Animated Background Overlay (3D Glow) ============ */
+      .animated-bg {
+        position: fixed;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 70%);
+        animation: rotateBg 40s linear infinite;
+        z-index: -2;
+      }
+      @keyframes rotateBg {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      /* ============ Welcome Screen ============ */
+      #welcomeScreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.85);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 10;
+        animation: fadeIn 1.5s ease-out;
+      }
+      #welcomeScreen h1 {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        text-shadow: 2px 2px 5px #000;
+        animation: pulse 2s infinite;
+      }
+      #welcomeScreen p {
+        font-size: 1.2rem;
+        margin-bottom: 30px;
+        text-shadow: 1px 1px 3px #000;
+      }
+      #wordCountSelector {
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      #wordCountSelector label {
+        margin-right: 15px;
+        font-size: 1rem;
+      }
+      #wordCountSelector input {
+        margin-right: 5px;
+        transform: scale(1.2);
+        vertical-align: middle;
+      }
+      #startButton {
+        padding: 15px 30px;
+        font-size: 1.2rem;
+        border: none;
+        border-radius: 8px;
+        background: var(--primary-color);
+        color: #fff;
+        cursor: pointer;
+        transition: background 0.3s;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+      }
+      #startButton:hover {
+        background: #c62828;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes pulse {
+        0% { transform: scale(0.95); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(0.95); }
+      }
+      /* ============ Game Layout ============ */
+      #gameScreen {
+        display: none;
+        flex-direction: column;
+        padding: 20px;
+        min-height: 100vh;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      header h2 {
+        font-size: 1.8rem;
+        text-shadow: 1px 1px 3px #000;
+      }
+      #themeToggle {
+        padding: 8px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        background: var(--primary-color);
+        color: #fff;
+      }
+      
+      #testContainer {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        flex: 1;
+      }
+      #typingArea {
+        flex: 2;
+        background: rgba(0, 0, 0, 0.7);
+        border-radius: 10px;
+        padding: 30px;
+        position: relative;
+        overflow: hidden;
+        animation: slideIn 1s ease-out;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.7);
+      }
+      @keyframes slideIn {
+        from { transform: translateX(-50px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      #wordsDisplay {
+        font-size: 1.6rem;
+        line-height: 1.6;
+        letter-spacing: 1px;
+        margin-bottom: 20px;
+        user-select: none;
+      }
+      #wordsDisplay span {
+        transition: color 0.2s ease;
+      }
+      #wordsDisplay span.correct {
+        color: var(--primary-color);
+        text-shadow: 1px 1px 3px #000;
+      }
+      #wordsDisplay span.incorrect {
+        color: var(--accent-color);
+        text-shadow: 1px 1px 3px #000;
+      }
+      #textInput {
+        width: 100%;
+        padding: 12px;
+        font-size: 1.4rem;
+        border: none;
+        border-radius: 5px;
+        outline: none;
+      }
+      /* ============ Stats & Timer ============ */
+      #stats {
+        margin-top: 20px;
+        font-size: 1.2rem;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+      /* ============ Progress Graph Section ============ */
+      #progressSection {
+        flex: 1;
+        background: rgba(0, 0, 0, 0.7);
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.7);
+        text-align: center;
+        min-width: 280px;
+      }
+      #progressSection h3 {
+        margin-bottom: 10px;
+      }
+      /* Canvas for Chart.js graph */
+      #progressChart {
+        max-width: 100%;
+        height: 200px;
+      }
+      /* ============ Car Animation ============ */
+      #carAnimation {
+        position: fixed;
+        bottom: 20px;
+        left: -200px;
+        width: 150px;
+        height: auto;
+        background: url('car.png') no-repeat;
+        background-size: contain;
+        pointer-events: none;
+        display: none;
+        z-index: 5;
+      }
+      @keyframes carDrive {
+        0% { left: -200px; }
+        100% { left: 110%; }
+      }
+      /* ============ Confetti ============ */
+      .confetti {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: red;
+        animation: fall 2s linear forwards;
+        opacity: 0.8;
+      }
+      @keyframes fall {
+        0% { transform: translateY(0) rotate(0deg); }
+        100% { transform: translateY(300px) rotate(360deg); opacity: 0; }
+      }
+      /* ============ Results Modal ============ */
+      #resultsModal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.85);
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 20;
+        animation: fadeIn 0.5s ease-out;
+      }
+      #resultsModal .modal-content {
+        background: rgba(255, 255, 255, 0.95);
+        color: #000;
+        padding: 30px;
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.7);
+      }
+      #resultsModal .modal-content h2 {
+        margin-bottom: 15px;
+      }
+      #resultsModal .modal-content p {
+        margin-bottom: 10px;
+        font-size: 1.2rem;
+      }
+      #resultsModal .modal-content button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        background: var(--primary-color);
+        color: #fff;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+      #resultsModal .modal-content button:hover {
+        background: #c62828;
+      }
+      /* ============ Responsive ============ */
+      @media (max-width: 768px) {
+        #testContainer { flex-direction: column; }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Custom Animated Cursor -->
+    <div id="customCursor"></div>
+
+    <!-- Animated Background Overlay -->
+    <div class="animated-bg"></div>
+
+    <!-- Welcome Screen -->
+    <div id="welcomeScreen">
+      <h1>Yonko Typist</h1>
+      <p>Become a typing emperor like the Yonko! – Inspired by One Piece</p>
+      <!-- Word Count Selector -->
+      <div id="wordCountSelector">
+        <label><input type="radio" name="wordCount" value="10" checked />Seaman (10 words) </label>
+        <label><input type="radio" name="wordCount" value="20" />Captain (20 words)</label>
+        <label><input type="radio" name="wordCount" value="30" />Admiral (30 words)</label>
+        <label><input type="radio" name="wordCount" value="40" />Fleet Admiral (40 words)</label>
+      </div>
+      <button id="startButton">Start Test</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen">
+      <header>
+        <h2>Yonko Typist</h2>
+        <button id="themeToggle">Haki Shift</button>
+      </header>
+      <div id="stats">
+        <span id="timer">Time: 60s</span>
+        <span id="wpm">WPM: 0</span>
+        <span id="accuracy">Accuracy: 100%</span>
+      </div>
+      <div id="testContainer">
+        <!-- Typing Area -->
+        <div id="typingArea">
+          <div id="wordsDisplay">
+            <!-- Random words will be dynamically generated here -->
+          </div>
+          <input type="text" id="textInput" autocomplete="off" placeholder="Start typing here..." />
+        </div>
+        <!-- Progress Graph Section -->
+        <div id="progressSection">
+          <h3>Progress</h3>
+          <canvas id="progressChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Car Animation Element -->
+    <div id="carAnimation"></div>
+
+    <!-- Results Modal -->
+    <div id="resultsModal">
+      <div class="modal-content">
+        <h2>Test Completed!</h2>
+        <p id="finalWPM">WPM: 0</p>
+        <p id="finalAccuracy">Accuracy: 100%</p>
+        <p id="finalWords">Words Completed: 0</p>
+        <button id="restartButton">Restart Test</button>
+      </div>
+    </div>
+
+    <!-- Audio Elements for Sound Effects -->
+    <audio id="correctSound" src="wano.ogg"></audio>
+    <audio id="errorSound" src="https://actions.google.com/sounds/v1/cartoon/boing.ogg"></audio>
+    <audio id="completeSound" src="https://actions.google.com/sounds/v1/cartoon/slide_whistle_to_drum_hit.ogg"></audio>
+
+    <script>
+      /******************** Global Variables ********************/
+      // A word bank that includes classic words plus One Piece–themed words
+      const WORD_BANK = "the quick brown fox jumps over the lazy dog practice makes perfect coding challenge never stop learning one piece wano arc adventure samurai pirate nakama".split(" ");
+      let testDuration = 60; // seconds
+      let timerInterval;
+      let timeLeft = testDuration;
+      let currentTestWords = [];
+      let currentWordIndex = 0;
+      let correctCharCount = 0;
+      let totalCharCount = 0;
+      let isTestRunning = false;
+      let selectedWordCount = 10;
+      
+      /******************** DOM Elements ********************/
+      const welcomeScreen = document.getElementById("welcomeScreen");
+      const startButton = document.getElementById("startButton");
+      const gameScreen = document.getElementById("gameScreen");
+      const themeToggle = document.getElementById("themeToggle");
+      const timerDisplay = document.getElementById("timer");
+      const wpmDisplay = document.getElementById("wpm");
+      const accuracyDisplay = document.getElementById("accuracy");
+      const wordsDisplay = document.getElementById("wordsDisplay");
+      const textInput = document.getElementById("textInput");
+      const progressChartCtx = document.getElementById("progressChart").getContext("2d");
+      const carAnimation = document.getElementById("carAnimation");
+      const correctSound = document.getElementById("correctSound");
+      const errorSound = document.getElementById("errorSound");
+      const completeSound = document.getElementById("completeSound");
+      const resultsModal = document.getElementById("resultsModal");
+      const finalWPM = document.getElementById("finalWPM");
+      const finalAccuracy = document.getElementById("finalAccuracy");
+      const finalWords = document.getElementById("finalWords");
+      const restartButton = document.getElementById("restartButton");
+      const customCursor = document.getElementById("customCursor");
+
+      /******************** Chart.js Setup ********************/
+      // Create a Chart.js progress graph. It will update as the test progresses.
+      let progressChart = new Chart(progressChartCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Progress'],
+          datasets: [{
+            label: 'Words Completed (%)',
+            data: [0],
+            backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim(),
+            borderColor: '#000',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: { stepSize: 10 }
+            }
+          },
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+
+      /******************** Utility Functions ********************/
+      function getRandomWords(count) {
+        let words = [];
+        for (let i = 0; i < count; i++) {
+          const randomIndex = Math.floor(Math.random() * WORD_BANK.length);
+          words.push(WORD_BANK[randomIndex]);
+        }
+        return words;
+      }
+
+      function loadTest() {
+        // Reset stats
+        timeLeft = testDuration;
+        currentWordIndex = 0;
+        correctCharCount = 0;
+        totalCharCount = 0;
+        isTestRunning = false;
+        textInput.value = "";
+        timerDisplay.innerText = `Time: ${timeLeft}s`;
+        wpmDisplay.innerText = "WPM: 0";
+        accuracyDisplay.innerText = "Accuracy: 100%";
+        updateProgressChart(0);
+        // Generate new words based on selected word count
+        currentTestWords = getRandomWords(selectedWordCount);
+        wordsDisplay.innerHTML = "";
+        currentTestWords.forEach((word, index) => {
+          const span = document.createElement("span");
+          span.innerText = word + " ";
+          span.id = "word-" + index;
+          wordsDisplay.appendChild(span);
+        });
+        highlightCurrentWord();
+      }
+
+      function highlightCurrentWord() {
+        currentTestWords.forEach((_, i) => {
+          const span = document.getElementById("word-" + i);
+          span.classList.remove("current");
+        });
+        const currentSpan = document.getElementById("word-" + currentWordIndex);
+        if (currentSpan) currentSpan.classList.add("current");
+      }
+
+      function startTimer() {
+        if (isTestRunning) return;
+        isTestRunning = true;
+        timerInterval = setInterval(() => {
+          timeLeft--;
+          timerDisplay.innerText = `Time: ${timeLeft}s`;
+          if (timeLeft <= 0) {
+            endTest();
+          }
+        }, 1000);
+      }
+
+      function endTest() {
+        clearInterval(timerInterval);
+        textInput.disabled = true;
+        completeSound.currentTime = 0;
+        completeSound.play();
+        launchCarAnimation();
+        launchConfetti();
+        // Show results modal after a short delay
+        setTimeout(showResults, 1500);
+      }
+
+      function showResults() {
+        let elapsed = testDuration - timeLeft;
+        let wpm = elapsed > 0 ? Math.round((correctCharCount / 5) / (elapsed / 60)) : 0;
+        let accuracy = totalCharCount > 0 ? Math.round((correctCharCount / totalCharCount) * 100) : 100;
+        finalWPM.innerText = `WPM: ${wpm}`;
+        finalAccuracy.innerText = `Accuracy: ${accuracy}%`;
+        finalWords.innerText = `Words Completed: ${currentWordIndex}`;
+        resultsModal.style.display = "flex";
+      }
+
+      function updateStats() {
+        let elapsed = testDuration - timeLeft;
+        let wpm = elapsed > 0 ? Math.round((correctCharCount / 5) / (elapsed / 60)) : 0;
+        wpmDisplay.innerText = `WPM: ${wpm}`;
+        let accuracy = totalCharCount > 0 ? Math.round((correctCharCount / totalCharCount) * 100) : 100;
+        accuracyDisplay.innerText = `Accuracy: ${accuracy}%`;
+        let progressPercent = Math.min((currentWordIndex / currentTestWords.length) * 100, 100);
+        updateProgressChart(progressPercent);
+      }
+
+      function updateProgressChart(percent) {
+        progressChart.data.datasets[0].data[0] = percent;
+        progressChart.update();
+      }
+
+      function launchCarAnimation() {
+        carAnimation.style.display = "block";
+        carAnimation.style.animation = "none";
+        void carAnimation.offsetWidth; // reflow to restart animation
+        carAnimation.style.animation = "carDrive 2s ease-in-out";
+        setTimeout(() => { carAnimation.style.display = "none"; }, 2000);
+      }
+
+      function launchConfetti() {
+        for (let i = 0; i < 30; i++) {
+          const confetti = document.createElement("div");
+          confetti.classList.add("confetti");
+          confetti.style.background = `hsl(${Math.random() * 360}, 100%, 50%)`;
+          confetti.style.left = Math.random() * window.innerWidth + "px";
+          confetti.style.top = "-20px";
+          document.body.appendChild(confetti);
+          setTimeout(() => confetti.remove(), 2000);
+        }
+      }
+
+      /******************** Event Listeners ********************/
+      // Start button: Read selected word count, hide welcome screen and load test
+      startButton.addEventListener("click", () => {
+        const wordCountRadios = document.getElementsByName("wordCount");
+        wordCountRadios.forEach(radio => {
+          if (radio.checked) {
+            selectedWordCount = parseInt(radio.value);
+          }
+        });
+        welcomeScreen.style.display = "none";
+        gameScreen.style.display = "flex";
+        textInput.disabled = false;
+        loadTest();
+        textInput.focus();
+      });
+
+      // Restart test from results modal
+      restartButton.addEventListener("click", () => {
+        resultsModal.style.display = "none";
+        textInput.disabled = false;
+        loadTest();
+        textInput.focus();
+      });
+
+      // Theme toggle button
+      themeToggle.addEventListener("click", () => {
+        document.body.classList.toggle("light");
+      });
+
+      // Typing input event: Check input word against current word
+      textInput.addEventListener("input", () => {
+        if (!isTestRunning && textInput.value.length === 1) {
+          startTimer();
+        }
+        let inputText = textInput.value.trim();
+        let currentWord = currentTestWords[currentWordIndex];
+        totalCharCount++;
+        if (inputText === currentWord) {
+          correctCharCount += currentWord.length;
+          textInput.value = "";
+          currentWordIndex++;
+          highlightCurrentWord();
+          // Optionally play correct sound:
+          // correctSound.currentTime = 0;
+          // correctSound.play();
+          if (currentWordIndex >= currentTestWords.length) {
+            endTest();
+          }
+        } else if (!currentWord.startsWith(inputText)) {
+          errorSound.currentTime = 0;
+          errorSound.play();
+        }
+        updateStats();
+      });
+
+      /******************** Custom Cursor Animation ********************/
+      document.addEventListener("mousemove", (e) => {
+        customCursor.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+      });
+
+      /******************** Initialization ********************/
+      // Start with welcome screen visible. The test loads upon clicking Start.
+      loadTest();
+    </script>
+  </body>
+</html>
